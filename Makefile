@@ -7,7 +7,10 @@ CFLAGS = -c -O3 -mavx -mavx2 -Wshadow -Winit-self -Wredundant-decls -Wcast-align
 	-Wnon-virtual-dtor -Woverloaded-virtual -Wpointer-arith -Wsign-promo -Wstack-usage=8192 -Wstrict-aliasing   \
 	-Wstrict-null-sentinel -Wtype-limits -Wwrite-strings -Werror=vla -D_DEBUG -D_EJUDGE_CLIENT_SIDE
 
-INCLUDES = ./includes/mandelbrot.h
+LIBS = -lsfml-graphics -lsfml-window -lsfml-system
+
+INCLUDES = ./includes/mandelbrot.hpp
+
 SOURCES = ./src/mandelbrot.cpp
 
 OBJECTS = $(SOURCES:.cpp=.o)
@@ -25,6 +28,9 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(CFLAGS) $< -o $@
 
 .PHONY: clean
+
+rn:
+	./mandelbrot.exe
 
 clean:
 	rm -rf *.o mandelbrot
