@@ -26,11 +26,11 @@ typedef struct
     sf::Sprite          sprite;
 } WindowCl;
 
-const int   Y_WINDOW_SIZE        = 600, X_WINDOW_SIZE        = 800;
+const int   Y_WINDOW_SIZE        = 800, X_WINDOW_SIZE        = 800;
 const int   Y_FPS_WINDOW         = 75,  X_FPS_WINDOW         = 100;
 const float FPS_FIELD_POSITION_X = 0.f, FPS_FIELD_POSITION_Y = 0.f;
 
-const float dx = 1.f / 800.f,     dy = 1.f / 600.f;
+const float dx = 2.f / 800.f,     dy = 2.f / 600.f;
 
 const float r2Max = 10.f;
 const int   nMax  = 256;

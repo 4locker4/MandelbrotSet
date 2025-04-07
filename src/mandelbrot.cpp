@@ -5,28 +5,45 @@ int ClaculateSet (sf::Image * image, MandelbrotData * MandelbrotSizees);
 
 int main ()
 {
-    WindowCl        MandelbrotWindow = {};
-    MandelbrotData  MandelbrotSizes  = {};
+    MandelbrotData  MandelbrotSizes  = {};                                              // Init shifts and scale
 
-    MandelbrotWindow.window.create                (sf::VideoMode (X_WINDOW_SIZE, Y_WINDOW_SIZE), "Mandelbrot");
+    sf::RenderWindow    window;
+    sf::Image           image;
+    sf::RectangleShape  fpsField;
+    sf::Font            fpsFont;
+    sf::Text            fpsText;
+    sf::Clock           clock;
+    sf::Texture         texture;
 
-    MandelbrotWindow.fpsField.setSize             (sf::Vector2f (90.f, 75.f));
-    MandelbrotWindow.fpsField.setFillColor        (sf::Color::Black);
-    MandelbrotWindow.fpsField.setOutlineColor     (sf::Color::Red);
-    MandelbrotWindow.fpsField.setOutlineThickness (1);
-    MandelbrotWindow.fpsField.setPosition         (5.f, 5.f);
+    window.create                (sf::VideoMode (X_WINDOW_SIZE, Y_WINDOW_SIZE), "Mandelbrot");
 
-    MandelbrotWindow.fpsFont.loadFromFile ("includes/TimesNewRoman.ttf");
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//                                      FPS                                     
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-    MandelbrotWindow.fpsText.setFont          (MandelbrotWindow.fpsFont);
-    MandelbrotWindow.fpsText.setCharacterSize (30);
-    MandelbrotWindow.fpsText.setColor         (sf::Color::White);
-    MandelbrotWindow.fpsText.setPosition      (FPS_FIELD_POSITION_X + 10, FPS_FIELD_POSITION_Y / 2 + 20);
+    fpsField.setSize             (sf::Vector2f (90.f, 75.f));          // Init FPS`s field
+    fpsField.setFillColor        (sf::Color::Black);
+    fpsField.setOutlineColor     (sf::Color::Red);
+    fpsField.setOutlineThickness (1);
+    fpsField.setPosition         (5.f, 5.f);
 
-    while (MandelbrotWindow.window.isOpen ())
+    fpsFont.loadFromFile ("includes/TimesNewRoman.ttf");               // Get font 
+
+    fpsText.setFont          (fpsFont);                                // Init FPS text
+    fpsText.setCharacterSize (30);
+    fpsText.setColor         (sf::Color::White);
+    fpsText.setPosition      (FPS_FIELD_POSITION_X + 10, FPS_FIELD_POSITION_Y / 2 + 20);
+
+
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//                                  Start
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+    while (window.isOpen ())
     {        
-        MandelbrotWindow.image.create (X_WINDOW_SIZE, Y_WINDOW_SIZE, sf::Color::White);
+        image.create (X_WINDOW_SIZE, Y_WINDOW_SIZE, sf::Color::White);
 
+//======   Shifts   ====================================================================
         if (MoveLeft)   MandelbrotSizes.shift_x -= dx;
         if (MoveRight)  MandelbrotSizes.shift_x += dx;
         if (MoveDown)   MandelbrotSizes.shift_y += dy;
@@ -34,29 +51,35 @@ int main ()
         if (ScalePlus)  MandelbrotSizes.scale   += dx;
         if (ScaleMinus) MandelbrotSizes.scale   -= dx;
 
-        if (ExitWindow) break;
+        if (ExitWindow) break;                                  // Break
 
-        CheckToSaveCoords
+        CheckToSaveCoords                                       // Check if user wants to save shifts
+//======   ------   ====================================================================
 
-        MandelbrotWindow.clock.restart ();
+        clock.restart ();                      // Start FPS
         
-        ClaculateSet (&MandelbrotWindow.image, &MandelbrotSizes);
+        ClaculateSet (&image, &MandelbrotSizes);
 
-        float passed_time = MandelbrotWindow.clock.getElapsedTime().asSeconds();
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//                                  Take FPS
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+        float passed_time = clock.getElapsedTime().asSeconds();
         float FPS = 1 / passed_time;
 
         snprintf (FPS_STRING, 9, "FPS: %.f", FPS);
-        MandelbrotWindow.fpsText.setString (FPS_STRING);
+        fpsText.setString (FPS_STRING);
 
-        MandelbrotWindow.texture.loadFromImage (MandelbrotWindow.image);
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-        MandelbrotWindow.clock.restart();
+        texture.loadFromImage (image);    // Render image
+        sf::Sprite sprite (texture);
 
-        MandelbrotWindow.window.clear    ();
-        MandelbrotWindow.window.draw     (MandelbrotWindow.sprite);
-        MandelbrotWindow.window.draw     (MandelbrotWindow.fpsField);
-        MandelbrotWindow.window.draw     (MandelbrotWindow.fpsText);
-        MandelbrotWindow.window.display  ();
+        window.clear    ();
+        window.draw     (sprite);
+        window.draw     (fpsField);
+        window.draw     (fpsText);
+        window.display  ();
     }
 
     return 0;
@@ -67,7 +90,7 @@ int ClaculateSet (sf::Image * image, MandelbrotData * MandelbrotSizes)
     for (int y_coord = 0; y_coord < Y_WINDOW_SIZE; y_coord++)
     {
         float x0 = ((                - 400.f) * dx + MandelbrotSizes->shift_x - 1.f) * MandelbrotSizes->scale,
-              y0 = (((float) y_coord - 300.f) * dy + MandelbrotSizes->shift_y + 0.f) * MandelbrotSizes->scale;
+              y0 = (((float) y_coord - 400.f) * dy + MandelbrotSizes->shift_y + 0.f) * MandelbrotSizes->scale;
 
         for (int x_coord = 0; x_coord < X_WINDOW_SIZE; x_coord++, x0 += dx)
         {
@@ -90,7 +113,9 @@ int ClaculateSet (sf::Image * image, MandelbrotData * MandelbrotSizes)
                 y = 2 * xy + y0;
             }
 
-            sf::Color color = (N == nMax) ? sf::Color::Black : sf::Color::Green;
+            sf::Color color = (N == nMax) ? sf::Color::Black : sf::Color ((uint8_t) sqrt (255 - N * 0.8), (uint8_t) sqrt (N * 3), (uint8_t) 255 - 255 % N);
+
+            image->setPixel (x_coord, y_coord, color);
         }
     }
 
