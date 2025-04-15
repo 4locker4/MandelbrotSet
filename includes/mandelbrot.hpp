@@ -30,13 +30,13 @@ const int   Y_WINDOW_SIZE        = 800, X_WINDOW_SIZE        = 800;
 const int   Y_FPS_WINDOW         = 75,  X_FPS_WINDOW         = 100;
 const float FPS_FIELD_POSITION_X = 0.f, FPS_FIELD_POSITION_Y = 0.f;
 
-const float dx = 10.f / 800.f,     dy = 10.f / 600.f;
-const float ds = 0.9;
+const float dx = 3.f / 800.f,     dy = 3.f / 600.f;
+const float ds = 0.9f;
 
 const float r2Max = 10.f;
 const int   nMax  = 256;
 
-const int   SIZE_OF_PIXEL_ARRAY  = 4;
+const int   SIZE_OF_PIXEL_ARRAY  = 8;
 
 char FPS_STRING[9] = {};
 

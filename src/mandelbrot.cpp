@@ -1,10 +1,13 @@
 #include "../includes/mandelbrot.hpp"
 #include "../includes/DSL.hpp"
-#include <mmintrin.h>
+#include <immintrin.h>
 
 inline int CalculateRadius (float x, float y, float x0, float y0);
 
 #define GRAPHIC
+#define MUL_X0(i) x0 + dx * i
+
+const __m256 r2Max_array = _mm256_set1_ps (r2Max);
 
 int main ()
 {
@@ -124,26 +127,49 @@ int CalculateSet (sf::Image * image, MandelbrotData * MandelbrotSizes)
 {
     for (int y_coord = 0; y_coord < Y_WINDOW_SIZE; y_coord++)
     {
-        float x0 = ((                - 400.f) * dx + MandelbrotSizes->shift_x - 1.f) * MandelbrotSizes->scale,
-              y0 = (((float) y_coord - 400.f) * dy + MandelbrotSizes->shift_y + 0.f) * MandelbrotSizes->scale;
+        float x0 = ((                - 400.f * MandelbrotSizes->scale) * dx + MandelbrotSizes->shift_x - 1.f) * MandelbrotSizes->scale,
+              y0 = (((float) y_coord - 400.f * MandelbrotSizes->scale) * dy + MandelbrotSizes->shift_y + 0.f) * MandelbrotSizes->scale;
 
-        for (int x_coord = 0; x_coord < X_WINDOW_SIZE; x_coord += SIZE_OF_PIXEL_ARRAY, x0 += 4 * dx)
+        for (int x_coord = 0; x_coord < X_WINDOW_SIZE; x_coord += SIZE_OF_PIXEL_ARRAY, x0 += SIZE_OF_PIXEL_ARRAY * dx * MandelbrotSizes->scale)
         {
-            float x_base  [SIZE_OF_PIXEL_ARRAY] = {x0         ,
-                                                   x0 + dx    ,
-                                                   x0 + dx * 2,
-                                                   x0 + dx * 3};
+            __m256 x_0_array = _mm256_add_ps (_mm256_set1_ps (x0),
+                                              _mm256_mul_ps  (_mm256_set_ps (7.f, 6.f, 5.f, 4.f, 3.f, 2.f, 1.f, 0.f),
+                                              _mm256_set1_ps (dx * MandelbrotSizes->scale)));
 
-            int   radiosN [SIZE_OF_PIXEL_ARRAY] = {0};
+            __m256 y_0_array = _mm256_set1_ps (y0);
+
+            __m256 x = x_0_array;
+            __m256 y = y_0_array;
+
+            __m256i n_array = _mm256_setzero_si256 ();
             
-            for (int i = 0; i < SIZE_OF_PIXEL_ARRAY; i++)
+            for (int n = 0; n < nMax; n++)
             {
-                radiosN[i] = CalculateRadius (x_base[i], y0, x0, y0);
+                __m256 x2 = _mm256_mul_ps (x, x);
+                __m256 y2 = _mm256_mul_ps (y, y);
+                __m256 xy = _mm256_mul_ps (x, y);
+
+                __m256 r2 = _mm256_add_ps (x2, y2);
+
+                __m256 compareRes = _mm256_cmp_ps (r2, r2Max_array, _CMP_LE_OQ);
+
+                int check = _mm256_movemask_ps (compareRes);
+
+                if (!check) break;
+
+                x = _mm256_sub_ps (x2, _mm256_add_ps (y2, x_0_array));   
+                y = _mm256_add_ps (y_0_array, _mm256_mul_ps (xy, _mm256_set1_ps (2.f)));
+
+                n_array = _mm256_add_epi32 (n_array, _mm256_castps_si256 (compareRes));
             }
 
 #ifdef GRAPHIC
 
-            SetColor (image, x_coord, y_coord, radiosN);
+            int radiusN[8] = {0};
+
+            _mm256_storeu_si256 ((__m256i*) radiusN, n_array);
+
+            SetColor (image, x_coord, y_coord, radiusN);
 
 #endif // GRAPHIC
         }
@@ -166,25 +192,4 @@ void SetColor (sf::Image * image, int x_coord, int y_coord, int * radiusN)
     }
 
     return;
-}
-
-inline int CalculateRadius (float x, float y, float x0, float y0)
-{
-    int N = 0;
-
-    for ( ; N < nMax; N++)
-    {
-        float x2 = x * x,
-              y2 = y * y,
-              xy = x * y;
-
-        float r2 = x2 + y2;
-
-        if (r2 >= r2Max) return N;
-
-        x = x2 - y2 + x0;
-        y = 2 * xy + y0;
-    }
-
-    return N;
 }
